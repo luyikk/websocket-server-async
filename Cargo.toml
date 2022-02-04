@@ -5,6 +5,9 @@ authors = ["yi lu <luyikk@126.com>"]
 edition = "2018"
 license = "MIT/Apache-2.0"
 readme = "README.md"
+repository = "https://github.com/luyikk/websocket-server-async
+documentation = "https://docs.rs/websocket-server-async"
+description = "rust websocket server tokio frame."
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

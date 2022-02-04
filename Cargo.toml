@@ -1,0 +1,21 @@
+[package]
+name = "websocket-server-async"
+version = "0.1.0"
+authors = ["yi lu <luyikk@126.com>"]
+edition = "2018"
+license = "MIT/Apache-2.0"
+readme = "README.md"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+aqueue="1"
+anyhow = "1"
+tokio-tungstenite ="0.16"
+futures-util = { version = "0.3", default-features = false, features = ["sink", "std"] }
+log = "0.4"
+async-trait="0.1"
+
+[dev-dependencies]
+env_logger = "0.9"

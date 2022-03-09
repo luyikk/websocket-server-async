@@ -7,6 +7,7 @@ use std::future::Future;
 use std::marker::PhantomData;
 use std::sync::Arc;
 use tokio::net::{TcpStream, ToSocketAddrs};
+use tokio_tungstenite::tungstenite::protocol::WebSocketConfig;
 use tokio_tungstenite::WebSocketStream;
 
 /// websocket server builder
@@ -14,6 +15,7 @@ pub struct Builder<I, R, A, T> {
     input: Option<I>,
     connect_event: Option<ConnectEventType>,
     addr: A,
+    config:Option<WebSocketConfig>,
     _phantom1: PhantomData<R>,
     _phantom2: PhantomData<T>,
 }
@@ -33,6 +35,7 @@ where
             input: None,
             connect_event: None,
             addr,
+            config: None,
             _phantom1: PhantomData::default(),
             _phantom2: PhantomData::default(),
         }
@@ -50,16 +53,18 @@ where
         self
     }
 
+    /// 设置config
+    pub fn set_config(mut self,config:WebSocketConfig)->Self{
+        self.config=Some(config);
+        self
+    }
+
     /// 生成TCPSERVER,如果没有设置 tcp input 将报错
     pub async fn build(mut self) -> Arc<Actor<WebSocketServer<I, R, T>>> {
         if let Some(input) = self.input.take() {
-            return if let Some(connect) = self.connect_event.take() {
-                WebSocketServer::new(self.addr, input, Some(connect))
-                    .await
-                    .unwrap()
-            } else {
-                WebSocketServer::new(self.addr, input, None).await.unwrap()
-            };
+          return  WebSocketServer::new(self.addr, input, self.connect_event,self.config)
+                .await
+                .unwrap()
         }
         panic!("input event is no settings,please use set_input_event function set input event.");
     }

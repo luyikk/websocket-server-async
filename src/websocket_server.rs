@@ -10,7 +10,8 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio::net::{TcpListener, TcpStream, ToSocketAddrs};
 use tokio::task::JoinHandle;
-use tokio_tungstenite::{accept_async, WebSocketStream};
+use tokio_tungstenite::{accept_async_with_config, WebSocketStream};
+use tokio_tungstenite::tungstenite::protocol::WebSocketConfig;
 
 pub type ConnectEventType = fn(SocketAddr) -> bool;
 
@@ -19,6 +20,7 @@ pub struct WebSocketServer<I, R, T> {
     listener: Option<TcpListener>,
     connect_event: Option<ConnectEventType>,
     input_event: Arc<I>,
+    config:Option<WebSocketConfig>,
     _phantom1: PhantomData<R>,
     _phantom2: PhantomData<T>,
 }
@@ -40,12 +42,14 @@ where
         addr: A,
         input: I,
         connect_event: Option<ConnectEventType>,
+        config:Option<WebSocketConfig>
     ) -> Result<Arc<Actor<WebSocketServer<I, R, T>>>> {
         let listener = TcpListener::bind(addr).await?;
         Ok(Arc::new(Actor::new(WebSocketServer {
             listener: Some(listener),
             connect_event,
             input_event: Arc::new(input),
+            config,
             _phantom1: PhantomData::default(),
             _phantom2: PhantomData::default(),
         })))
@@ -56,7 +60,7 @@ where
         if let Some(listener) = self.listener.take() {
             let connect_event = self.connect_event.take();
             let input_event = self.input_event.clone();
-
+            let config=self.config.clone();
             let join: JoinHandle<Result<()>> = tokio::spawn(async move {
                 loop {
                     let (socket, addr) = listener.accept().await?;
@@ -70,7 +74,7 @@ where
                     let input = input_event.clone();
                     let peer_token = token.clone();
                     tokio::spawn(async move {
-                        match accept_async(socket).await {
+                        match accept_async_with_config(socket,config).await {
                             Ok(ws_stream) => {
                                 let (sender, reader) = ws_stream.split();
                                 let peer = WSPeer::new(addr, sender);
@@ -84,7 +88,7 @@ where
                                 }
                             }
                             Err(err) => {
-                                error!("init websocket stream error:{:?}", err);
+                                error!("ipaddress:{} init websocket error:{:?} disconnect!", addr,err);
                             }
                         }
                     });

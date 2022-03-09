@@ -80,7 +80,8 @@ impl WSPeer {
     #[inline]
     async fn disconnect(&mut self) -> Result<()> {
         if let Some(mut sender) = self.sender.take() {
-            Ok(sender.close().await?)
+            sender.close().await?;
+            Ok(())
         } else {
             Ok(())
         }

@@ -15,7 +15,7 @@ pub struct Builder<I, R, A, T> {
     input: Option<I>,
     connect_event: Option<ConnectEventType>,
     addr: A,
-    config:Option<WebSocketConfig>,
+    config: Option<WebSocketConfig>,
     _phantom1: PhantomData<R>,
     _phantom2: PhantomData<T>,
 }
@@ -54,17 +54,17 @@ where
     }
 
     /// 设置config
-    pub fn set_config(mut self,config:WebSocketConfig)->Self{
-        self.config=Some(config);
+    pub fn set_config(mut self, config: WebSocketConfig) -> Self {
+        self.config = Some(config);
         self
     }
 
     /// 生成TCPSERVER,如果没有设置 tcp input 将报错
     pub async fn build(mut self) -> Arc<Actor<WebSocketServer<I, R, T>>> {
         if let Some(input) = self.input.take() {
-          return  WebSocketServer::new(self.addr, input, self.connect_event,self.config)
+            return WebSocketServer::new(self.addr, input, self.connect_event, self.config)
                 .await
-                .unwrap()
+                .unwrap();
         }
         panic!("input event is no settings,please use set_input_event function set input event.");
     }

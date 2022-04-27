@@ -60,7 +60,7 @@ where
         if let Some(listener) = self.listener.take() {
             let connect_event = self.connect_event.take();
             let input_event = self.input_event.clone();
-            let config = self.config.clone();
+            let config = self.config;
             let join: JoinHandle<Result<()>> = tokio::spawn(async move {
                 loop {
                     let (socket, addr) = listener.accept().await?;

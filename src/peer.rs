@@ -136,20 +136,17 @@ impl IPeer for Actor<WSPeer> {
     }
     #[inline]
     async fn send_ref(&self, buff: &[u8]) -> Result<usize> {
-        ensure!(!buff.is_empty(), "send buff is null");
-
         self.inner_call(|inner| async move { inner.get_mut().send(buff).await })
             .await
     }
+
     #[inline]
     async fn send_all_ref(&self, buff: &[u8]) -> Result<()> {
-        ensure!(!buff.is_empty(), "send buff is null");
-
         self.inner_call(|inner| async move {
             inner.get_mut().send(buff).await?;
             Ok(())
         })
-        .await
+            .await
     }
 
     #[inline]

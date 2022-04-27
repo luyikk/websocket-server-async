@@ -146,7 +146,7 @@ impl IPeer for Actor<WSPeer> {
             inner.get_mut().send(buff).await?;
             Ok(())
         })
-            .await
+        .await
     }
 
     #[inline]

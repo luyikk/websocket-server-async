@@ -8,6 +8,7 @@ use std::future::Future;
 use std::marker::PhantomData;
 use std::net::SocketAddr;
 use std::sync::Arc;
+use std::time::Duration;
 use tokio::net::{TcpListener, TcpStream, ToSocketAddrs};
 use tokio::task::JoinHandle;
 use tokio_tungstenite::tungstenite::protocol::WebSocketConfig;
@@ -74,8 +75,8 @@ where
                     let input = input_event.clone();
                     let peer_token = token.clone();
                     tokio::spawn(async move {
-                        match accept_async_with_config(socket, config).await {
-                            Ok(ws_stream) => {
+                        match tokio::time::timeout(Duration::from_secs(60), accept_async_with_config(socket, config)).await {
+                            Ok(Ok(ws_stream)) => {
                                 let (sender, reader) = ws_stream.split();
                                 let peer = WSPeer::new(addr, sender);
                                 if let Err(err) = (*input)(reader, peer.clone(), peer_token).await {
@@ -87,10 +88,16 @@ where
                                     debug!("{} disconnect", peer.addr())
                                 }
                             }
-                            Err(err) => {
+                            Ok(Err(err))=> {
                                 error!(
                                     "ipaddress:{} init websocket error:{:?} disconnect!",
                                     addr, err
+                                );
+                            },
+                            Err(_)=>{
+                                error!(
+                                    "ipaddress:{} read timeout 60 secs disconnect!",
+                                    addr
                                 );
                             }
                         }

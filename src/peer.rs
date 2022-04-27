@@ -95,8 +95,8 @@ pub trait IPeer: Sync + Send {
     async fn send_message(&self, message: Message) -> Result<()>;
     async fn send(&self, buff: Vec<u8>) -> Result<usize>;
     async fn send_all(&self, buff: Vec<u8>) -> Result<()>;
-    async fn send_ref<'a>(&'a self, buff: &'a [u8]) -> Result<usize>;
-    async fn send_all_ref<'a>(&'a self, buff: &'a [u8]) -> Result<()>;
+    async fn send_ref(&self, buff: &[u8]) -> Result<usize>;
+    async fn send_all_ref(&self, buff: &[u8]) -> Result<()>;
     async fn flush(&self) -> Result<()>;
     async fn disconnect(&self) -> Result<()>;
 }
@@ -135,23 +135,21 @@ impl IPeer for Actor<WSPeer> {
         .await
     }
     #[inline]
-    async fn send_ref<'a>(&'a self, buff: &'a [u8]) -> Result<usize> {
+    async fn send_ref(&self, buff: &[u8]) -> Result<usize> {
         ensure!(!buff.is_empty(), "send buff is null");
-        unsafe {
-            self.inner_call_ref(|inner| async move { inner.get_mut().send(buff).await })
-                .await
-        }
+
+        self.inner_call(|inner| async move { inner.get_mut().send(buff).await })
+            .await
     }
     #[inline]
-    async fn send_all_ref<'a>(&'a self, buff: &'a [u8]) -> Result<()> {
+    async fn send_all_ref(&self, buff: &[u8]) -> Result<()> {
         ensure!(!buff.is_empty(), "send buff is null");
-        unsafe {
-            self.inner_call_ref(|inner| async move {
-                inner.get_mut().send(buff).await?;
-                Ok(())
-            })
-            .await
-        }
+
+        self.inner_call(|inner| async move {
+            inner.get_mut().send(buff).await?;
+            Ok(())
+        })
+        .await
     }
 
     #[inline]

@@ -100,7 +100,7 @@ where
                             },
                             Err(_)=>{
                                 error!(
-                                    "ipaddress:{} read timeout 60 secs disconnect!",
+                                    "ipaddress:{} accept websocket init  timeout disconnect!",
                                     addr
                                 );
                             }

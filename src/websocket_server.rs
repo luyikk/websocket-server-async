@@ -22,6 +22,7 @@ pub struct WebSocketServer<I, R, T> {
     connect_event: Option<ConnectEventType>,
     input_event: Arc<I>,
     config: Option<WebSocketConfig>,
+    load_timeout_secs:u64,
     _phantom1: PhantomData<R>,
     _phantom2: PhantomData<T>,
 }
@@ -44,6 +45,7 @@ where
         input: I,
         connect_event: Option<ConnectEventType>,
         config: Option<WebSocketConfig>,
+        load_timeout_secs:u64,
     ) -> Result<Arc<Actor<WebSocketServer<I, R, T>>>> {
         let listener = TcpListener::bind(addr).await?;
         Ok(Arc::new(Actor::new(WebSocketServer {
@@ -51,6 +53,7 @@ where
             connect_event,
             input_event: Arc::new(input),
             config,
+            load_timeout_secs,
             _phantom1: PhantomData::default(),
             _phantom2: PhantomData::default(),
         })))
@@ -62,6 +65,7 @@ where
             let connect_event = self.connect_event.take();
             let input_event = self.input_event.clone();
             let config = self.config;
+            let load_timeout_secs=self.load_timeout_secs;
             let join: JoinHandle<Result<()>> = tokio::spawn(async move {
                 loop {
                     let (socket, addr) = listener.accept().await?;
@@ -75,7 +79,7 @@ where
                     let input = input_event.clone();
                     let peer_token = token.clone();
                     tokio::spawn(async move {
-                        match tokio::time::timeout(Duration::from_secs(60), accept_async_with_config(socket, config)).await {
+                        match tokio::time::timeout(Duration::from_secs(load_timeout_secs), accept_async_with_config(socket, config)).await {
                             Ok(Ok(ws_stream)) => {
                                 let (sender, reader) = ws_stream.split();
                                 let peer = WSPeer::new(addr, sender);

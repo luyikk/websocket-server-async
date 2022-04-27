@@ -16,6 +16,7 @@ pub struct Builder<I, R, A, T> {
     connect_event: Option<ConnectEventType>,
     addr: A,
     config: Option<WebSocketConfig>,
+    load_timeout_secs:u64,
     _phantom1: PhantomData<R>,
     _phantom2: PhantomData<T>,
 }
@@ -36,6 +37,7 @@ where
             connect_event: None,
             addr,
             config: None,
+            load_timeout_secs: 60,
             _phantom1: PhantomData::default(),
             _phantom2: PhantomData::default(),
         }
@@ -59,10 +61,16 @@ where
         self
     }
 
+    /// 设置等待websocket hand accept 加载 等待时间
+    pub fn set_load_timeout(mut self,load_timeout_secs:u64)->Self{
+        self.load_timeout_secs=load_timeout_secs;
+        self
+    }
+
     /// 生成TCPSERVER,如果没有设置 tcp input 将报错
     pub async fn build(mut self) -> Arc<Actor<WebSocketServer<I, R, T>>> {
         if let Some(input) = self.input.take() {
-            return WebSocketServer::new(self.addr, input, self.connect_event, self.config)
+            return WebSocketServer::new(self.addr, input, self.connect_event, self.config,self.load_timeout_secs)
                 .await
                 .unwrap();
         }

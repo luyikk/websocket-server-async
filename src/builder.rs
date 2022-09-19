@@ -60,8 +60,8 @@ where
     }
 
     /// 设置TCP server 连接事件
-    pub fn set_tls(mut self, tls: TlsAcceptor) -> Self {
-        self.tls_acceptor = Some(tls);
+    pub fn set_tls(mut self, tls: Option<TlsAcceptor>) -> Self {
+        self.tls_acceptor = tls;
         self
     }
 

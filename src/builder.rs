@@ -7,23 +7,26 @@ use std::future::Future;
 use std::marker::PhantomData;
 use std::sync::Arc;
 use tokio::net::{TcpStream, ToSocketAddrs};
+use tokio_rustls::TlsAcceptor;
 use tokio_tungstenite::tungstenite::protocol::WebSocketConfig;
 use tokio_tungstenite::WebSocketStream;
+use crate::stream::MaybeTlsStream;
 
 /// websocket server builder
 pub struct Builder<I, R, A, T> {
     input: Option<I>,
+    tls_acceptor:Option<TlsAcceptor>,
     connect_event: Option<ConnectEventType>,
     addr: A,
     config: Option<WebSocketConfig>,
-    load_timeout_secs:u64,
+    load_timeout_secs: u64,
     _phantom1: PhantomData<R>,
     _phantom2: PhantomData<T>,
 }
 
 impl<I, R, A, T> Builder<I, R, A, T>
 where
-    I: Fn(SplitStream<WebSocketStream<TcpStream>>, Arc<Actor<WSPeer>>, T) -> R
+    I: Fn(SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>, Arc<Actor<WSPeer>>, T) -> R
         + Send
         + Sync
         + 'static,
@@ -34,6 +37,7 @@ where
     pub fn new(addr: A) -> Builder<I, R, A, T> {
         Builder {
             input: None,
+            tls_acceptor: None,
             connect_event: None,
             addr,
             config: None,
@@ -55,6 +59,12 @@ where
         self
     }
 
+    /// 设置TCP server 连接事件
+    pub fn set_tls(mut self, tls: TlsAcceptor) -> Self {
+        self.tls_acceptor = Some(tls);
+        self
+    }
+
     /// 设置config
     pub fn set_config(mut self, config: WebSocketConfig) -> Self {
         self.config = Some(config);
@@ -62,17 +72,24 @@ where
     }
 
     /// 设置等待websocket hand accept 加载 等待时间
-    pub fn set_load_timeout(mut self,load_timeout_secs:u64)->Self{
-        self.load_timeout_secs=load_timeout_secs;
+    pub fn set_load_timeout(mut self, load_timeout_secs: u64) -> Self {
+        self.load_timeout_secs = load_timeout_secs;
         self
     }
 
     /// 生成TCPSERVER,如果没有设置 tcp input 将报错
     pub async fn build(mut self) -> Arc<Actor<WebSocketServer<I, R, T>>> {
         if let Some(input) = self.input.take() {
-            return WebSocketServer::new(self.addr, input, self.connect_event, self.config,self.load_timeout_secs)
-                .await
-                .unwrap();
+            return WebSocketServer::new(
+                self.addr,
+                input,
+                self.connect_event,
+                self.config,
+                self.tls_acceptor,
+                self.load_timeout_secs,
+            )
+            .await
+            .unwrap();
         }
         panic!("input event is no settings,please use set_input_event function set input event.");
     }

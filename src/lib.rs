@@ -1,5 +1,6 @@
 mod builder;
 mod peer;
+mod stream;
 mod websocket_server;
 
 pub use builder::Builder;

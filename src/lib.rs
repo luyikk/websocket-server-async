@@ -11,3 +11,4 @@ pub use tokio_tungstenite::{
     self, tungstenite::protocol::WebSocketConfig, tungstenite::Message, WebSocketStream,
 };
 pub use websocket_server::*;
+pub use stream::MaybeRustlsStream;

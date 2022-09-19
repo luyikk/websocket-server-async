@@ -10,7 +10,7 @@ use tokio::net::{TcpStream, ToSocketAddrs};
 use tokio_rustls::TlsAcceptor;
 use tokio_tungstenite::tungstenite::protocol::WebSocketConfig;
 use tokio_tungstenite::WebSocketStream;
-use crate::stream::MaybeTlsStream;
+use crate::stream::MaybeRustlsStream;
 
 /// websocket server builder
 pub struct Builder<I, R, A, T> {
@@ -26,7 +26,7 @@ pub struct Builder<I, R, A, T> {
 
 impl<I, R, A, T> Builder<I, R, A, T>
 where
-    I: Fn(SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>, Arc<Actor<WSPeer>>, T) -> R
+    I: Fn(SplitStream<WebSocketStream<MaybeRustlsStream<TcpStream>>>, Arc<Actor<WSPeer>>, T) -> R
         + Send
         + Sync
         + 'static,

@@ -15,7 +15,7 @@ use tokio::task::JoinHandle;
 use tokio_rustls::TlsAcceptor;
 use tokio_tungstenite::tungstenite::protocol::WebSocketConfig;
 use tokio_tungstenite::{accept_async_with_config, WebSocketStream};
-use crate::stream::MaybeTlsStream;
+use crate::stream::MaybeRustlsStream;
 
 pub type ConnectEventType = fn(SocketAddr) -> bool;
 
@@ -36,7 +36,7 @@ unsafe impl<I, R, T> Sync for WebSocketServer<I, R, T> {}
 
 impl<I, R, T> WebSocketServer<I, R, T>
 where
-    I: Fn(SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>, Arc<Actor<WSPeer>>, T) -> R
+    I: Fn(SplitStream<WebSocketStream<MaybeRustlsStream<TcpStream>>>, Arc<Actor<WSPeer>>, T) -> R
         + Send
         + Sync
         + 'static,
@@ -69,14 +69,14 @@ where
     async fn accept<S>(
         stream: S,
         tls_acceptor: Option<TlsAcceptor>
-    ) -> Result<MaybeTlsStream<S>>
+    ) -> Result<MaybeRustlsStream<S>>
         where
             S: AsyncRead + AsyncWrite + Unpin,
     {
         if let Some(acceptor) = tls_acceptor {
-            Ok(MaybeTlsStream::ServerTls(acceptor.accept(stream).await?))
+            Ok(MaybeRustlsStream::ServerTls(acceptor.accept(stream).await?))
         } else {
-            Ok(MaybeTlsStream::Plain(stream))
+            Ok(MaybeRustlsStream::Plain(stream))
         }
     }
 
@@ -161,7 +161,7 @@ pub trait IWebSocketServer<T> {
 #[async_trait::async_trait]
 impl<I, R, T> IWebSocketServer<T> for Actor<WebSocketServer<I, R, T>>
 where
-    I: Fn(SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>, Arc<Actor<WSPeer>>, T) -> R
+    I: Fn(SplitStream<WebSocketStream<MaybeRustlsStream<TcpStream>>>, Arc<Actor<WSPeer>>, T) -> R
         + Send
         + Sync
         + 'static,

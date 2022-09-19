@@ -7,11 +7,11 @@ use std::sync::Arc;
 use tokio::net::TcpStream;
 use tokio_tungstenite::tungstenite::Message;
 use tokio_tungstenite::WebSocketStream;
-use crate::stream::MaybeTlsStream;
+use crate::stream::MaybeRustlsStream;
 
 pub struct WSPeer {
     addr: SocketAddr,
-    sender: Option<SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>>,
+    sender: Option<SplitSink<WebSocketStream<MaybeRustlsStream<TcpStream>>, Message>>,
 }
 
 impl WSPeer {
@@ -19,7 +19,7 @@ impl WSPeer {
     #[inline]
     pub fn new(
         addr: SocketAddr,
-        sender: SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>,
+        sender: SplitSink<WebSocketStream<MaybeRustlsStream<TcpStream>>, Message>,
     ) -> Arc<Actor<WSPeer>> {
         Arc::new(Actor::new(WSPeer {
             addr,

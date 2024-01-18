@@ -1,4 +1,5 @@
 use crate::peer::WSPeer;
+use crate::stream::MaybeRustlsStream;
 use crate::websocket_server::{ConnectEventType, WebSocketServer};
 use anyhow::Result;
 use aqueue::Actor;
@@ -10,12 +11,11 @@ use tokio::net::{TcpStream, ToSocketAddrs};
 use tokio_rustls::TlsAcceptor;
 use tokio_tungstenite::tungstenite::protocol::WebSocketConfig;
 use tokio_tungstenite::WebSocketStream;
-use crate::stream::MaybeRustlsStream;
 
 /// websocket server builder
 pub struct Builder<I, R, A, T> {
     input: Option<I>,
-    tls_acceptor:Option<TlsAcceptor>,
+    tls_acceptor: Option<TlsAcceptor>,
     connect_event: Option<ConnectEventType>,
     addr: A,
     config: Option<WebSocketConfig>,
@@ -42,8 +42,8 @@ where
             addr,
             config: None,
             load_timeout_secs: 60,
-            _phantom1: PhantomData::default(),
-            _phantom2: PhantomData::default(),
+            _phantom1: Default::default(),
+            _phantom2: Default::default(),
         }
     }
 

@@ -1,3 +1,4 @@
+use crate::stream::MaybeRustlsStream;
 use anyhow::{bail, ensure, Result};
 use aqueue::Actor;
 use futures_util::stream::SplitSink;
@@ -7,7 +8,6 @@ use std::sync::Arc;
 use tokio::net::TcpStream;
 use tokio_tungstenite::tungstenite::Message;
 use tokio_tungstenite::WebSocketStream;
-use crate::stream::MaybeRustlsStream;
 
 pub struct WSPeer {
     addr: SocketAddr,
@@ -89,20 +89,18 @@ impl WSPeer {
     }
 }
 
-#[async_trait::async_trait]
 pub trait IPeer: Sync + Send {
     fn addr(&self) -> SocketAddr;
-    async fn is_disconnect(&self) -> Result<bool>;
-    async fn send_message(&self, message: Message) -> Result<()>;
-    async fn send(&self, buff: Vec<u8>) -> Result<usize>;
-    async fn send_all(&self, buff: Vec<u8>) -> Result<()>;
-    async fn send_ref(&self, buff: &[u8]) -> Result<usize>;
-    async fn send_all_ref(&self, buff: &[u8]) -> Result<()>;
-    async fn flush(&self) -> Result<()>;
-    async fn disconnect(&self) -> Result<()>;
+    fn is_disconnect(&self) -> impl std::future::Future<Output = Result<bool>>;
+    fn send_message(&self, message: Message) -> impl std::future::Future<Output = Result<()>>;
+    fn send(&self, buff: Vec<u8>) -> impl std::future::Future<Output = Result<usize>>;
+    fn send_all(&self, buff: Vec<u8>) -> impl std::future::Future<Output = Result<()>>;
+    fn send_ref(&self, buff: &[u8]) -> impl std::future::Future<Output = Result<usize>>;
+    fn send_all_ref(&self, buff: &[u8]) -> impl std::future::Future<Output = Result<()>>;
+    fn flush(&self) -> impl std::future::Future<Output = Result<()>>;
+    fn disconnect(&self) -> impl std::future::Future<Output = Result<()>>;
 }
 
-#[async_trait::async_trait]
 impl IPeer for Actor<WSPeer> {
     #[inline]
     fn addr(&self) -> SocketAddr {
